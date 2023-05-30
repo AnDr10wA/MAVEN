@@ -9,8 +9,5 @@
         <module name="TaskJDBC" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="MAVEN" target="20" />
-    </bytecodeTargetLevel>
   </component>
 </project>
