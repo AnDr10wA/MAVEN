@@ -11,15 +11,15 @@ public class UserDaoJDBCImpl implements UserDao {
 
 
 
-    String sql;
+    private  String sql;
 
     public UserDaoJDBCImpl() {
 
     }
-    private  void Conn(String sql){
+    private  void getConnectToDb(String sql){
         try(Connection connection = Util.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.executeUpdate();
+            Statement statement = connection.createStatement()) {
+            statement.execute(sql);
         } catch (SQLException e){
             e.printStackTrace();
         }
@@ -28,11 +28,11 @@ public class UserDaoJDBCImpl implements UserDao {
     public void createUsersTable() {
         sql = "CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
                 "PRIMARY KEY (ID));";
-        Conn(sql);
+        getConnectToDb(sql);
     }
     public void dropUsersTable() {
-        sql = "DROP TABLE IF NOT EXISTS users";
-        Conn(sql);
+        sql = "DROP TABLE IF EXISTS users;";
+        getConnectToDb(sql);
     }
 
     public void saveUser(String name, String lastName, byte age) {
@@ -51,13 +51,13 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void removeUserById(long id) {
-        sql = "IF NOT EXISTS delete from users where  id = " + id;
-        Conn(sql);
+        sql = "delete from users where  id = " + id;
+        getConnectToDb(sql);
     }
 
     public List<User> getAllUsers() {
 
-        sql = "select * from  users";
+        sql = "select * from  users;";
         ArrayList<User> usersList = new ArrayList<>();
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
@@ -83,7 +83,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        sql = "DELETE FROM   users;";
-        Conn(sql);
+        sql = "TRUNCATE users;";
+        getConnectToDb(sql);
     }
 }
