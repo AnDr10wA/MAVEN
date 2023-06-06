@@ -6,10 +6,14 @@ import java.util.List;
 
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+
+import javax.persistence.Query;
 
 
 public class UserDaoHibernateImpl implements UserDao {
+    private SessionFactory factory = HibirnateUtil.getSessionFactory();
     public UserDaoHibernateImpl() {
 
     }
@@ -17,22 +21,32 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        Session session = HibirnateUtil.getSessionFactory().openSession();
+        Session session = factory.openSession();
+        Transaction txn = session.beginTransaction();
+
         SQLQuery query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
                 "PRIMARY KEY (ID));");
+        query.executeUpdate();
+        txn.commit();
+
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = HibirnateUtil.getSessionFactory().openSession();
-        SQLQuery query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
+        Session session = factory.openSession();
+        session.beginTransaction();
+        Query query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
+        query.executeUpdate();
+        session.getTransaction().commit();
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
         User saveUser = new User(name, lastName, age);
-        Session session = HibirnateUtil.getSessionFactory().openSession();
+        Session session = factory.openSession();
+        Transaction tx1 = session.beginTransaction();
         session.save(saveUser);
+        tx1.commit();
         session.close();
     }
 
@@ -43,20 +57,24 @@ public class UserDaoHibernateImpl implements UserDao {
         User deletUser = session.get(User.class, id = id);
         session.delete(deletUser);
         tx1.commit();
+        session.close();
     }
 
     @Override
     public List<User> getAllUsers() {
-        try (Session session = HibirnateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("from users", User.class).list();
+        try (Session session = factory.openSession()) {
+            return session.createQuery("from User", User.class).list();
         }
-
     }
 
 
     @Override
     public void cleanUsersTable() {
-        Session session = HibirnateUtil.getSessionFactory().openSession();
-        SQLQuery query = session.createSQLQuery("TRUNCATE users;");
+
+        Session session = factory.openSession();
+        session.beginTransaction();
+        Query query = session.createSQLQuery("TRUNCATE users;");
+        query.executeUpdate();
+        session.getTransaction().commit();
     }
 }
