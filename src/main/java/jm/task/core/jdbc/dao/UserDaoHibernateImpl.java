@@ -22,12 +22,13 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void createUsersTable() {
         Session session = factory.openSession();
-        Transaction txn = session.beginTransaction();
+        session.beginTransaction();
 
         SQLQuery query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
                 "PRIMARY KEY (ID));");
         query.executeUpdate();
-        txn.commit();
+        session.getTransaction().commit();
+        session.close();
 
     }
 
@@ -38,25 +39,26 @@ public class UserDaoHibernateImpl implements UserDao {
         Query query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
         query.executeUpdate();
         session.getTransaction().commit();
+        session.close();
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
         User saveUser = new User(name, lastName, age);
         Session session = factory.openSession();
-        Transaction tx1 = session.beginTransaction();
+        session.beginTransaction();
         session.save(saveUser);
-        tx1.commit();
+        session.getTransaction().commit();
         session.close();
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = HibirnateUtil.getSessionFactory().openSession();
-        Transaction tx1 = session.beginTransaction();
+        Session session = factory.openSession();
+        session.beginTransaction();
         User deletUser = session.get(User.class, id = id);
         session.delete(deletUser);
-        tx1.commit();
+        session.getTransaction().commit();
         session.close();
     }
 

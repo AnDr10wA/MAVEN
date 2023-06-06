@@ -21,7 +21,7 @@ public class Main {
 //
 //           userDao.removeUserById(5);
 //        userDao.getAllUsers();
-          userDao.cleanUsersTable();
+//          userDao.cleanUsersTable();
 //        userDao.dropUsersTable();
     }
 }
