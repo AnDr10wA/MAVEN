@@ -14,32 +14,35 @@ import javax.persistence.Query;
 
 public class UserDaoHibernateImpl implements UserDao {
     private SessionFactory factory = HibirnateUtil.getSessionFactory();
+    private String sql = null;
     public UserDaoHibernateImpl() {
 
     }
+    private void connectedToBase(String sql){
+        Session session = factory.openSession();
+        session.beginTransaction();
+        SQLQuery query = session.createSQLQuery(sql);
+        query.executeUpdate();
+        session.getTransaction().commit();
+        session.close();
+    }
+
 
 
     @Override
     public void createUsersTable() {
-        Session session = factory.openSession();
-        session.beginTransaction();
 
-        SQLQuery query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
-                "PRIMARY KEY (ID));");
-        query.executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+
+        sql = "CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
+                "PRIMARY KEY (ID));";
+        connectedToBase(sql);
 
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = factory.openSession();
-        session.beginTransaction();
-        Query query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
-        query.executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+        sql = "DROP TABLE IF EXISTS users;";
+        connectedToBase(sql);
     }
 
     @Override
@@ -73,10 +76,7 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void cleanUsersTable() {
 
-        Session session = factory.openSession();
-        session.beginTransaction();
-        Query query = session.createSQLQuery("TRUNCATE users;");
-        query.executeUpdate();
-        session.getTransaction().commit();
+        sql = "TRUNCATE users;";
+        connectedToBase(sql);
     }
 }
