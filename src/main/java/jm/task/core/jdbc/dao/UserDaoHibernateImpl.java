@@ -11,6 +11,9 @@ import org.hibernate.Transaction;
 
 import javax.persistence.Query;
 
+import static org.hibernate.resource.transaction.spi.TransactionStatus.ACTIVE;
+import static org.hibernate.resource.transaction.spi.TransactionStatus.MARKED_ROLLBACK;
+
 
 public class UserDaoHibernateImpl implements UserDao {
     private SessionFactory factory = HibirnateUtil.getSessionFactory();
@@ -19,12 +22,19 @@ public class UserDaoHibernateImpl implements UserDao {
 
     }
     private void connectedToBase(String sql){
-        Session session = factory.openSession();
-        session.beginTransaction();
-        SQLQuery query = session.createSQLQuery(sql);
-        query.executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+        try (Session session = factory.openSession();) {
+            Transaction transaction = session.getTransaction();
+            try {
+                transaction.begin();
+                Query query = session.createSQLQuery(sql).addEntity(User.class);
+                query.executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                    transaction.rollback();
+                }
+            }
+        }
     }
 
 
@@ -48,21 +58,35 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void saveUser(String name, String lastName, byte age) {
         User saveUser = new User(name, lastName, age);
-        Session session = factory.openSession();
-        session.beginTransaction();
-        session.save(saveUser);
-        session.getTransaction().commit();
-        session.close();
+        try (Session session = factory.openSession();){
+            Transaction transaction = session.getTransaction();
+            try {
+                transaction.begin();
+                session.save(saveUser);
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                    transaction.rollback();
+                }
+            }
+        }
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = factory.openSession();
-        session.beginTransaction();
-        User deletUser = session.get(User.class, id = id);
-        session.delete(deletUser);
-        session.getTransaction().commit();
-        session.close();
+        try (Session session = factory.openSession();){
+            Transaction transaction = session.getTransaction();
+            try {
+                transaction.begin();
+                User deletUser = session.get(User.class, id = id);
+                session.delete(deletUser);
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                    transaction.rollback();
+                }
+            }
+        }
     }
 
     @Override
