@@ -14,49 +14,54 @@ import javax.persistence.Query;
 
 public class UserDaoHibernateImpl implements UserDao {
     private SessionFactory factory = HibirnateUtil.getSessionFactory();
+    private String sql = null;
     public UserDaoHibernateImpl() {
 
     }
+    private void connectedToBase(String sql){
+        Session session = factory.openSession();
+        session.beginTransaction();
+        SQLQuery query = session.createSQLQuery(sql);
+        query.executeUpdate();
+        session.getTransaction().commit();
+        session.close();
+    }
+
 
 
     @Override
     public void createUsersTable() {
-        Session session = factory.openSession();
-        Transaction txn = session.beginTransaction();
 
-        SQLQuery query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
-                "PRIMARY KEY (ID));");
-        query.executeUpdate();
-        txn.commit();
+
+        sql = "CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
+                "PRIMARY KEY (ID));";
+        connectedToBase(sql);
 
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = factory.openSession();
-        session.beginTransaction();
-        Query query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
-        query.executeUpdate();
-        session.getTransaction().commit();
+        sql = "DROP TABLE IF EXISTS users;";
+        connectedToBase(sql);
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
         User saveUser = new User(name, lastName, age);
         Session session = factory.openSession();
-        Transaction tx1 = session.beginTransaction();
+        session.beginTransaction();
         session.save(saveUser);
-        tx1.commit();
+        session.getTransaction().commit();
         session.close();
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = HibirnateUtil.getSessionFactory().openSession();
-        Transaction tx1 = session.beginTransaction();
+        Session session = factory.openSession();
+        session.beginTransaction();
         User deletUser = session.get(User.class, id = id);
         session.delete(deletUser);
-        tx1.commit();
+        session.getTransaction().commit();
         session.close();
     }
 
@@ -71,10 +76,7 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void cleanUsersTable() {
 
-        Session session = factory.openSession();
-        session.beginTransaction();
-        Query query = session.createSQLQuery("TRUNCATE users;");
-        query.executeUpdate();
-        session.getTransaction().commit();
+        sql = "TRUNCATE users;";
+        connectedToBase(sql);
     }
 }
