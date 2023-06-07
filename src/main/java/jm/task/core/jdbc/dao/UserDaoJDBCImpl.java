@@ -10,71 +10,58 @@ import java.util.List;
 public class UserDaoJDBCImpl implements UserDao {
 
 
-    PreparedStatement statment = null;
-    String sql;
+
+    private  String sql;
 
     public UserDaoJDBCImpl() {
 
     }
-    private  void Conn(String sql){
-        Util util = new Util();
-        Connection connection = util.getConnection();
-        try {
-            statment = connection.prepareStatement(sql);
-            statment.executeUpdate();
+    private  void getConnectToDb(String sql){
+        try(Connection connection = Util.getConnection();
+            Statement statement = connection.createStatement()) {
+            statement.execute(sql);
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+
+    }
+    public void createUsersTable() {
+        sql = "CREATE TABLE IF NOT EXISTS Users( ID BIGINT NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
+                "PRIMARY KEY (ID));";
+        getConnectToDb(sql);
+    }
+    public void dropUsersTable() {
+        sql = "DROP TABLE IF EXISTS users;";
+        getConnectToDb(sql);
+    }
+
+    public void saveUser(String name, String lastName, byte age) {
+        sql = "INSERT INTO  users (name, lastname, age) VALUES (?, ?, ?);";
+
+        try(Connection connection = Util.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2,lastName);
+            preparedStatement.setByte(3, age);
+            preparedStatement.executeUpdate();
 
         } catch (SQLException e){
             e.printStackTrace();
         }
-        finally {
-            if (statment != null){
-                try {
-                    statment.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            if (connection != null){
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-
-    public void createUsersTable() {
-        sql = "CREATE TABLE Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
-                "PRIMARY KEY (ID));";
-        Conn(sql);
-
-    }
-
-    public void dropUsersTable() {
-        sql = "DROP TABLE users";
-        Conn(sql);
-    }
-
-    public void saveUser(String name, String lastName, byte age) {
-        sql = "INSERT INTO users (name, lastname, age) VALUES (\""
-                 + name + "\",\"" +  lastName +  "\"," + age + ");";
-        Conn(sql);
-
     }
 
     public void removeUserById(long id) {
-        sql = "delete from users where id = " + id;
-        Conn(sql);
+        sql = "delete from users where  id = " + id;
+        getConnectToDb(sql);
     }
 
     public List<User> getAllUsers() {
-        Util util = new Util();
-        Connection connection = util.getConnection();
-        sql = "select * from users";
+
+        sql = "select * from  users;";
         ArrayList<User> usersList = new ArrayList<>();
-        try {
-            Statement statement = connection.createStatement();
+        try (Connection connection = Util.getConnection();
+             Statement statement = connection.createStatement()) {
+
             ResultSet resultset = statement.executeQuery(sql);
             while (resultset.next()){
                 User user = new User();
@@ -96,7 +83,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        sql = "DELETE FROM users;";
-        Conn(sql);
+        sql = "TRUNCATE users;";
+        getConnectToDb(sql);
     }
 }
