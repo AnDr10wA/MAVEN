@@ -1,0 +1,287 @@
+Index: src/main/java/jm/task/core/jdbc/dao/UserDaoHibernateImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package jm.task.core.jdbc.dao;\r\n\r\nimport jm.task.core.jdbc.model.User;\r\n\r\nimport java.util.List;\r\n\r\npublic class UserDaoHibernateImpl implements UserDao {\r\n    public UserDaoHibernateImpl() {\r\n\r\n    }\r\n\r\n\r\n    @Override\r\n    public void createUsersTable() {\r\n\r\n    }\r\n\r\n    @Override\r\n    public void dropUsersTable() {\r\n\r\n    }\r\n\r\n    @Override\r\n    public void saveUser(String name, String lastName, byte age) {\r\n\r\n    }\r\n\r\n    @Override\r\n    public void removeUserById(long id) {\r\n\r\n    }\r\n\r\n    @Override\r\n    public List<User> getAllUsers() {\r\n        return null;\r\n    }\r\n\r\n    @Override\r\n    public void cleanUsersTable() {\r\n\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/jm/task/core/jdbc/dao/UserDaoHibernateImpl.java b/src/main/java/jm/task/core/jdbc/dao/UserDaoHibernateImpl.java
+--- a/src/main/java/jm/task/core/jdbc/dao/UserDaoHibernateImpl.java	(revision f812a2ac55096e0cdc4a85431374803d593d699e)
++++ b/src/main/java/jm/task/core/jdbc/dao/UserDaoHibernateImpl.java	(date 1686077223678)
+@@ -1,10 +1,19 @@
+ package jm.task.core.jdbc.dao;
+ 
+ import jm.task.core.jdbc.model.User;
+-
++import jm.task.core.jdbc.util.HibirnateUtil;
+ import java.util.List;
+ 
++import org.hibernate.SQLQuery;
++import org.hibernate.Session;
++import org.hibernate.SessionFactory;
++import org.hibernate.Transaction;
++
++import javax.persistence.Query;
++
++
+ public class UserDaoHibernateImpl implements UserDao {
++    private SessionFactory factory = HibirnateUtil.getSessionFactory();
+     public UserDaoHibernateImpl() {
+ 
+     }
+@@ -12,31 +21,66 @@
+ 
+     @Override
+     public void createUsersTable() {
++        Session session = factory.openSession();
++        Transaction txn = session.beginTransaction();
++
++        SQLQuery query = session.createSQLQuery("CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
++                "PRIMARY KEY (ID));");
++        query.executeUpdate();
++        txn.commit();
+ 
+     }
+ 
+     @Override
+     public void dropUsersTable() {
+-
++        Session session = factory.openSession();
++        session.beginTransaction();
++        Query query = session.createSQLQuery("DROP TABLE IF EXISTS users;");
++        query.executeUpdate();
++        session.getTransaction().commit();
+     }
+ 
+     @Override
+     public void saveUser(String name, String lastName, byte age) {
+-
++        User saveUser = new User(name, lastName, age);
++        Session session = factory.openSession();
++        Transaction tx1 = session.beginTransaction();
++        session.save(saveUser);
++        tx1.commit();
++        session.close();
+     }
+ 
+     @Override
+     public void removeUserById(long id) {
+-
++        Session session = HibirnateUtil.getSessionFactory().openSession();
++        Transaction tx1 = session.beginTransaction();
++        User deletUser = session.get(User.class, id = id);
++        session.delete(deletUser);
++        tx1.commit();
++        session.close();
+     }
+ 
+     @Override
+     public List<User> getAllUsers() {
+-        return null;
++        try (Session session = HibirnateUtil.getSessionFactory().openSession()) {
++            session.beginTransaction();
++            Query query  = session.createSQLQuery("from users");
++
++            query.executeUpdate();
++            session.getTransaction().commit();
++            return session.createSQLQuery("from users").list();
++        }
++
+     }
++
+ 
+     @Override
+     public void cleanUsersTable() {
+ 
++        Session session = factory.openSession();
++        session.beginTransaction();
++        Query query = session.createSQLQuery("TRUNCATE users;");
++        query.executeUpdate();
++        session.getTransaction().commit();
+     }
+ }
+Index: src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package jm.task.core.jdbc.dao;\r\n\r\nimport jm.task.core.jdbc.model.User;\r\nimport jm.task.core.jdbc.util.Util;\r\n\r\nimport java.sql.*;\r\nimport java.util.ArrayList;\r\nimport java.util.List;\r\n\r\npublic class UserDaoJDBCImpl implements UserDao {\r\n\r\n\r\n\r\n    String sql;\r\n\r\n    public UserDaoJDBCImpl() {\r\n\r\n    }\r\n    private  void Conn(String sql){\r\n        try(Connection connection = Util.getConnection();\r\n            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {\r\n            preparedStatement.executeUpdate();\r\n        } catch (SQLException e){\r\n            e.printStackTrace();\r\n        }\r\n\r\n    }\r\n    public void createUsersTable() {\r\n        sql = \"CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, \" +\r\n                \"PRIMARY KEY (ID));\";\r\n        Conn(sql);\r\n    }\r\n    public void dropUsersTable() {\r\n        sql = \"DROP TABLE IF NOT EXISTS users\";\r\n        Conn(sql);\r\n    }\r\n\r\n    public void saveUser(String name, String lastName, byte age) {\r\n        sql = \"INSERT INTO  users (name, lastname, age) VALUES (?, ?, ?);\";\r\n\r\n        try(Connection connection = Util.getConnection();\r\n            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {\r\n            preparedStatement.setString(1, name);\r\n            preparedStatement.setString(2,lastName);\r\n            preparedStatement.setByte(3, age);\r\n            preparedStatement.executeUpdate();\r\n\r\n        } catch (SQLException e){\r\n            e.printStackTrace();\r\n        }\r\n    }\r\n\r\n    public void removeUserById(long id) {\r\n        sql = \"IF NOT EXISTS delete from users where  id = \" + id;\r\n        Conn(sql);\r\n    }\r\n\r\n    public List<User> getAllUsers() {\r\n\r\n        sql = \"select * from  users\";\r\n        ArrayList<User> usersList = new ArrayList<>();\r\n        try (Connection connection = Util.getConnection();\r\n             Statement statement = connection.createStatement()) {\r\n\r\n            ResultSet resultset = statement.executeQuery(sql);\r\n            while (resultset.next()){\r\n                User user = new User();\r\n                user.setId(resultset.getLong(1));\r\n                user.setName(resultset.getString(2));\r\n                user.setLastName(resultset.getString(3));\r\n                user.setAge(resultset.getByte(4));\r\n                usersList.add(user);\r\n\r\n            }\r\n\r\n        } catch ( SQLException e){\r\n            e.printStackTrace();\r\n        }\r\n        System.out.println(usersList);\r\n\r\n\r\n        return usersList;\r\n    }\r\n\r\n    public void cleanUsersTable() {\r\n        sql = \"DELETE FROM   users;\";\r\n        Conn(sql);\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java b/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java
+--- a/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java	(revision f812a2ac55096e0cdc4a85431374803d593d699e)
++++ b/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java	(date 1686076968023)
+@@ -11,15 +11,15 @@
+ 
+ 
+ 
+-    String sql;
++    private  String sql;
+ 
+     public UserDaoJDBCImpl() {
+ 
+     }
+-    private  void Conn(String sql){
++    private  void getConnectToDb(String sql){
+         try(Connection connection = Util.getConnection();
+-            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+-            preparedStatement.executeUpdate();
++            Statement statement = connection.createStatement()) {
++            statement.execute(sql);
+         } catch (SQLException e){
+             e.printStackTrace();
+         }
+@@ -28,11 +28,11 @@
+     public void createUsersTable() {
+         sql = "CREATE TABLE IF NOT EXISTS Users( ID int NOT NULL AUTO_INCREMENT, name varchar(100), lastname varchar(100),age INT, " +
+                 "PRIMARY KEY (ID));";
+-        Conn(sql);
++        getConnectToDb(sql);
+     }
+     public void dropUsersTable() {
+-        sql = "DROP TABLE IF NOT EXISTS users";
+-        Conn(sql);
++        sql = "DROP TABLE IF EXISTS users;";
++        getConnectToDb(sql);
+     }
+ 
+     public void saveUser(String name, String lastName, byte age) {
+@@ -51,13 +51,13 @@
+     }
+ 
+     public void removeUserById(long id) {
+-        sql = "IF NOT EXISTS delete from users where  id = " + id;
+-        Conn(sql);
++        sql = "delete from users where  id = " + id;
++        getConnectToDb(sql);
+     }
+ 
+     public List<User> getAllUsers() {
+ 
+-        sql = "select * from  users";
++        sql = "select * from  users;";
+         ArrayList<User> usersList = new ArrayList<>();
+         try (Connection connection = Util.getConnection();
+              Statement statement = connection.createStatement()) {
+@@ -83,7 +83,7 @@
+     }
+ 
+     public void cleanUsersTable() {
+-        sql = "DELETE FROM   users;";
+-        Conn(sql);
++        sql = "TRUNCATE users;";
++        getConnectToDb(sql);
+     }
+ }
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"740e36b8-0e2a-48e0-bc58-46035e79916a\" name=\"Changes\" comment=\"result 1.1.4 part 2\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/util/Util.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/util/Util.java\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"master\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"MavenImportPreferences\">\r\n    <option name=\"generalSettings\">\r\n      <MavenGeneralSettings>\r\n        <option name=\"mavenHome\" value=\"C:/Program Files/apache-maven-3.9.2\" />\r\n        <option name=\"useMavenConfig\" value=\"true\" />\r\n      </MavenGeneralSettings>\r\n    </option>\r\n  </component>\r\n  <component name=\"ProjectId\" id=\"2QTTXnsFalJ9BQzKaqHDCDjUL9k\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">{\r\n  &quot;keyToString&quot;: {\r\n    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,\r\n    &quot;last_opened_file_path&quot;: &quot;G:/PjrojectJava/PP/MAVEN&quot;,\r\n    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,\r\n    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,\r\n    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,\r\n    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.notifications&quot;\r\n  }\r\n}</component>\r\n  <component name=\"RunManager\" selected=\"JUnit.UserServiceTest\">\r\n    <configuration name=\"Main\" type=\"Application\" factoryName=\"Application\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"jm.task.core.jdbc.Main\" />\r\n      <module name=\"TaskJDBC\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"jm.task.core.jdbc.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"UserServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"TaskJDBC\" />\r\n      <option name=\"PACKAGE_NAME\" value=\"\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"UserServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"JUnit.UserServiceTest\" />\r\n        <item itemvalue=\"Application.Main\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"740e36b8-0e2a-48e0-bc58-46035e79916a\" name=\"Changes\" comment=\"\" />\r\n      <created>1685376614712</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1685376614712</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"result 1.1.4 part 1\">\r\n      <created>1685476564341</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1685476564341</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"result 1.1.4 part 2\">\r\n      <created>1685550246132</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1685550246132</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"3\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"result 1.1.4 part 1\" />\r\n    <MESSAGE value=\"result 1.1.4 part 2\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"result 1.1.4 part 2\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision f812a2ac55096e0cdc4a85431374803d593d699e)
++++ b/.idea/workspace.xml	(date 1686077143965)
+@@ -4,10 +4,10 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="740e36b8-0e2a-48e0-bc58-46035e79916a" name="Changes" comment="result 1.1.4 part 2">
++    <list default="true" id="740e36b8-0e2a-48e0-bc58-46035e79916a" name="Changes" comment="result 1.1.5 part 1">
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/dao/UserDaoJDBCImpl.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/util/Util.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/jm/task/core/jdbc/util/Util.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/target/classes/jm/task/core/jdbc/dao/UserDaoJDBCImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/jm/task/core/jdbc/dao/UserDaoJDBCImpl.class" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -17,10 +17,11 @@
+   <component name="Git.Settings">
+     <option name="RECENT_BRANCH_BY_REPOSITORY">
+       <map>
+-        <entry key="$PROJECT_DIR$" value="master" />
++        <entry key="$PROJECT_DIR$" value="Hibernate" />
+       </map>
+     </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
++    <option name="UPDATE_TYPE" value="REBASE" />
+   </component>
+   <component name="MavenImportPreferences">
+     <option name="generalSettings">
+@@ -36,15 +37,22 @@
+   </component>
+   <component name="PropertiesComponent">{
+   &quot;keyToString&quot;: {
++    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+-    &quot;last_opened_file_path&quot;: &quot;G:/PjrojectJava/PP/MAVEN&quot;,
+-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.notifications&quot;
++    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
++    &quot;last_opened_file_path&quot;: &quot;G:/PjrojectJava/PP/MAVEN/mysql-connector-j-8.0.33/mysql-connector-j-8.0.33/mysql-connector-j-8.0.33.jar&quot;,
++    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
++    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
++    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
++    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
++    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
++    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
++    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.appearance&quot;,
++    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+   }
+ }</component>
+-  <component name="RunManager" selected="JUnit.UserServiceTest">
++  <component name="RunManager" selected="Application.Main">
+     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+       <option name="MAIN_CLASS_NAME" value="jm.task.core.jdbc.Main" />
+       <module name="TaskJDBC" />
+@@ -69,8 +77,8 @@
+     </configuration>
+     <recent_temporary>
+       <list>
+-        <item itemvalue="JUnit.UserServiceTest" />
+         <item itemvalue="Application.Main" />
++        <item itemvalue="JUnit.UserServiceTest" />
+       </list>
+     </recent_temporary>
+   </component>
+@@ -82,6 +90,8 @@
+       <option name="number" value="Default" />
+       <option name="presentableId" value="Default" />
+       <updated>1685376614712</updated>
++      <workItem from="1685988911024" duration="1387000" />
++      <workItem from="1686067435859" duration="7758000" />
+     </task>
+     <task id="LOCAL-00001" summary="result 1.1.4 part 1">
+       <created>1685476564341</created>
+@@ -90,19 +100,22 @@
+       <option name="project" value="LOCAL" />
+       <updated>1685476564341</updated>
+     </task>
+-    <task id="LOCAL-00002" summary="result 1.1.4 part 2">
+-      <created>1685550246132</created>
++    <task id="LOCAL-00002" summary="result 1.1.5 part 1">
++      <created>1685907764125</created>
+       <option name="number" value="00002" />
+       <option name="presentableId" value="LOCAL-00002" />
+       <option name="project" value="LOCAL" />
+-      <updated>1685550246132</updated>
++      <updated>1685907764125</updated>
+     </task>
+     <option name="localTasksCounter" value="3" />
+     <servers />
+   </component>
++  <component name="TypeScriptGeneratedFilesManager">
++    <option name="version" value="3" />
++  </component>
+   <component name="VcsManagerConfiguration">
+     <MESSAGE value="result 1.1.4 part 1" />
+-    <MESSAGE value="result 1.1.4 part 2" />
+-    <option name="LAST_COMMIT_MESSAGE" value="result 1.1.4 part 2" />
++    <MESSAGE value="result 1.1.5 part 1" />
++    <option name="LAST_COMMIT_MESSAGE" value="result 1.1.5 part 1" />
+   </component>
+ </project>
+\ No newline at end of file
