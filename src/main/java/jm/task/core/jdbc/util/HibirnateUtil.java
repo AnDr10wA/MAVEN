@@ -8,6 +8,8 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 
+import static jm.task.core.jdbc.util.Util.*;
+
 public class HibirnateUtil {
     private static SessionFactory sessionFactory;
 
@@ -18,10 +20,10 @@ public class HibirnateUtil {
 
                 // Hibernate settings equivalent to hibernate.cfg.xml's properties
                 Properties settings = new Properties();
-                settings.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
-                settings.put(Environment.URL, "jdbc:mysql://localhost/maven?");
-                settings.put(Environment.USER, "root");
-                settings.put(Environment.PASS, "root");
+                settings.put(Environment.DRIVER, DB_DRIVER);
+                settings.put(Environment.URL, DB_URL);
+                settings.put(Environment.USER, DB_USERNAME);
+                settings.put(Environment.PASS, DB_PASSWORD);
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL5Dialect");
 
                 settings.put(Environment.SHOW_SQL, "true");

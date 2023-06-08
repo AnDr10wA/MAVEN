@@ -7,10 +7,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Util {
-    private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://localhost/maven?";
-    private static final String DB_USERNAME = "root";
-    private static final String DB_PASSWORD = "root";
+    protected static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
+    protected static final String DB_URL = "jdbc:mysql://localhost/maven?";
+    protected static final String DB_USERNAME = "root";
+    protected static final String DB_PASSWORD = "root";
 
     public static Connection getConnection() {
 
